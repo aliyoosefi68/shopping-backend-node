@@ -3,6 +3,8 @@ const JWT = require("jsonwebtoken");
 const createError = require("http-errors");
 const { UserModel } = require("../models/users");
 const redisClient = require("./intredis");
+const path = require("path");
+const fs = require("fs");
 const {
   ACCESS_TOKEN_SECRET_KEY,
   REFRESH_TOKEN_SECRET_KEY,
@@ -18,7 +20,7 @@ function SignAccessToken(userId) {
     const payload = {
       mobile: user.mobile,
     };
-    const options = { expiresIn: "1h" };
+    const options = { expiresIn: "1y" };
     JWT.sign(payload, ACCESS_TOKEN_SECRET_KEY, options, (err, token) => {
       if (err)
         reject(createError.InternalServerError("خطایی در سرور رخ داده است"));
@@ -51,7 +53,9 @@ function VerifyRefreshToken(token) {
       const { mobile } = payload || {};
       const user = await UserModel.findOne({ mobile }, { password: 0, otp: 0 });
       if (!user) reject(createError.Unauthorized("حساب کاربری یافت نشد"));
-      const refreshToken = await redisClient.get(String(user?._id));
+      const refreshToken = await redisClient.get(
+        String(user?._id || "key_default")
+      );
       if (!refreshToken)
         reject(createError.Unauthorized("ورود مجدد به حسابی کاربری انجام نشد"));
       if (token === refreshToken) return resolve(mobile);
@@ -60,9 +64,17 @@ function VerifyRefreshToken(token) {
   });
 }
 
+function deletFileInPublic(fileAddress) {
+  if (fileAddress) {
+    const pathFile = path.join(__dirname, "..", "..", "public", fileAddress);
+    if (fs.existsSync()) fs.unlinkSync(pathFile);
+  }
+}
+
 module.exports = {
   numberRandom,
   SignAccessToken,
   SignRefreshToken,
   VerifyRefreshToken,
+  deletFileInPublic,
 };

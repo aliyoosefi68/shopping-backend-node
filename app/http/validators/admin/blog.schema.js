@@ -8,7 +8,9 @@ const createBlogSchema = Joi.object({
     .error(new Error("عنوان مقاله درست نمی باشد!")),
   text: Joi.string().error(new Error("متن مقاله درست نمی باشد!")),
   short_text: Joi.string().error(new Error("خلاصه مقاله درست نمی باشد!")),
-  image: Joi.string().error(new Error("تصویر مقاله درست نمی باشد!")),
+  filename: Joi.string()
+    .pattern(/(\.png|\.jpg|\.webp|\.jpeg|\.gif)/)
+    .error(new Error("تصویر مقاله درست نمی باشد!")),
   tags: Joi.array()
     .min(0)
     .max(30)
@@ -16,6 +18,7 @@ const createBlogSchema = Joi.object({
   category: Joi.string()
     .pattern(MongoDBIdPatern)
     .error(new Error("دسته بندی مقاله درست نمی باشد!")),
+  fileUploadPath: Joi.allow(),
 });
 
 module.exports = {
